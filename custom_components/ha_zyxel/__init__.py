@@ -15,6 +15,7 @@ from custom_components.ha_zyxel.const import (
     CONF_SCAN_INTERVAL,
     CONF_USERNAME,
     DEFAULT_SCAN_INTERVAL,
+    ERROR_BACKOFF_INTERVAL,
     MAX_SCAN_INTERVAL,
     MIN_SCAN_INTERVAL,
     DOMAIN,
@@ -67,6 +68,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.error("Could not connect to Zyxel router: %s", ex)
         raise ConfigEntryNotReady from ex
 
+    def _set_interval(seconds: int) -> None:
+        """Adjust the next-poll interval (coordinator reschedules off this)."""
+        coordinator.update_interval = timedelta(seconds=seconds)
+
     async def async_update_data():
         """Fetch data from the router."""
         try:
@@ -85,12 +90,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
                     return data
 
-                return await hass.async_add_executor_job(get_all_data)
-        except asyncio.TimeoutError:
+                data = await hass.async_add_executor_job(get_all_data)
+            # Success: make sure we're back on the normal (fast) cadence.
+            _set_interval(_get_scan_interval(entry))
+            return data
+        except asyncio.TimeoutError as err:
             router._session_valid = False
-            raise UpdateFailed("Router data fetch timed out")
+            # Back off so we don't hammer a rebooting/unreachable modem.
+            _set_interval(ERROR_BACKOFF_INTERVAL)
+            raise UpdateFailed("Router data fetch timed out") from err
         except Exception as err:
             router._session_valid = False
+            _set_interval(ERROR_BACKOFF_INTERVAL)
             raise UpdateFailed(f"Error communicating with router: {err}") from err
 
     coordinator = DataUpdateCoordinator(
