@@ -7,12 +7,13 @@ CONF_HOST = "host"
 CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
 
-# Polling interval (seconds). The hard floor protects the CPE management SoC:
-# it refreshes/caches cellwan_status internally every ~1-2s, so polling faster
-# only repeats values, adds load and bloats the statistics DB.
+# Polling interval (seconds). Floor is 5s by request. Note: the CPE refreshes
+# and caches cellwan_status internally roughly every 1-2s, so polling faster
+# than that only repeats values while adding load and growing the statistics DB.
+# The single session is reused, so a short interval does NOT cause re-logins.
 CONF_SCAN_INTERVAL = "scan_interval"
-DEFAULT_SCAN_INTERVAL = 30
-MIN_SCAN_INTERVAL = 10
+DEFAULT_SCAN_INTERVAL = 5
+MIN_SCAN_INTERVAL = 5
 MAX_SCAN_INTERVAL = 300
 
 # Number of fixed Secondary Component Carrier slots to expose (SCC1, SCC2).

@@ -25,8 +25,8 @@ sensor.py  ── builds entities from the dict every refresh
 | File | Role |
 |------|------|
 | `__init__.py` | Entry setup; creates the single `router`; `DataUpdateCoordinator`; `_get_scan_interval()` + options update listener (re-applies interval in place, **no re-login**). |
-| `config_flow.py` | Setup form (host/user/pass) **and** `OptionsFlowHandler` (poll interval, 10–300 s). |
-| `const.py` | `DOMAIN`, defaults, `DEFAULT/MIN/MAX_SCAN_INTERVAL`, `SCC_SLOTS`. |
+| `config_flow.py` | Setup form (host/user/pass) **and** `OptionsFlowHandler` (poll interval, 5–300 s). |
+| `const.py` | `DOMAIN`, defaults, `DEFAULT/MIN/MAX_SCAN_INTERVAL` (5/5/300), `SCC_SLOTS`. |
 | `sensor.py` | All sensors. See breakdown below. |
 | `button.py` | Reboot button (the only write action). |
 | `translations/*.json` | UI strings for config + options flows. |

@@ -85,11 +85,12 @@ After adding the device you can change how often it is polled:
 1. Go to **Settings > Devices & Services > Zyxel > Configure**.
 2. Set the **Polling interval** (seconds).
 
-Range: **10–300 s**, default **30 s**. The 10 s floor is deliberate — the CPE
-refreshes its cellular statistics internally only every ~1–2 s and caches them,
-so polling faster just repeats values, adds load and bloats the statistics
-database. Changes apply immediately, without reinstalling the integration and
-without re-logging into the modem (the single session is preserved).
+Range: **5–300 s**, default **5 s**. Note: the CPE refreshes its cellular
+statistics internally only every ~1–2 s and caches them, so polling faster than
+that just repeats values, adds load and bloats the statistics database. Changes
+apply immediately, without reinstalling the integration and without re-logging
+into the modem (the single session is preserved, so a short interval does not
+trigger session-limit 401s).
 
 ## Available entities
 

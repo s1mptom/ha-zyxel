@@ -23,9 +23,9 @@
       "init": {
         "title": "Zyxel options",
         "data": {
-          "scan_interval": "Polling interval (seconds, 10-300)"
+          "scan_interval": "Polling interval (seconds, 5-300)"
         },
-        "description": "How often to poll the modem. Minimum 10 s — the CPE refreshes its cellular statistics internally every ~1-2 s, so faster polling just repeats values and grows the database."
+        "description": "How often to poll the modem. Minimum 5 s. Note: the CPE refreshes its cellular statistics internally every ~1-2 s, so polling faster than that just repeats values and grows the database."
       }
     }
   }
