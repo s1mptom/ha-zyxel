@@ -355,6 +355,22 @@ async def async_setup_entry(
         async_add_entities(sensors)
 
 
+def _get_cellwan_list(data: Any, key: str) -> list:
+    """Return a list field (SCC_Info / NBR_Info) from the status payload.
+
+    get_status() nests cellular fields under a "cellular" key
+    ({"cellular": {...}, "traffic": {...}}); older/other firmwares may put them
+    at the top level. Check both, prefer "cellular".
+    """
+    if not isinstance(data, dict):
+        return []
+    cellular = data.get("cellular")
+    if isinstance(cellular, dict) and isinstance(cellular.get(key), list):
+        return cellular[key]
+    value = data.get(key)
+    return value if isinstance(value, list) else []
+
+
 def _build_device_info(entry: ConfigEntry) -> DeviceInfo:
     """Return the shared device info so every entity lands on one device."""
     return DeviceInfo(
@@ -469,8 +485,8 @@ class ZyxelSCCSensor(CoordinatorEntity, SensorEntity):
 
     def _slot_data(self) -> dict | None:
         """Return the dict for this SCC slot, or None if not present."""
-        scc_list = (self.coordinator.data or {}).get("SCC_Info")
-        if isinstance(scc_list, list) and self._slot < len(scc_list):
+        scc_list = _get_cellwan_list(self.coordinator.data, "SCC_Info")
+        if self._slot < len(scc_list):
             entry = scc_list[self._slot]
             if isinstance(entry, dict):
                 return entry
@@ -515,8 +531,7 @@ class ZyxelNeighbourSensor(CoordinatorEntity, SensorEntity):
 
     def _neighbours(self) -> list:
         """Return the NBR_Info list (empty if missing/malformed)."""
-        nbr = (self.coordinator.data or {}).get("NBR_Info")
-        return nbr if isinstance(nbr, list) else []
+        return _get_cellwan_list(self.coordinator.data, "NBR_Info")
 
     @property
     def state(self):
