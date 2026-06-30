@@ -17,5 +17,16 @@
     "abort": {
       "already_configured": "L'appareil est déjà configuré"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options Zyxel",
+        "data": {
+          "scan_interval": "Intervalle d'interrogation (secondes, 10-300)"
+        },
+        "description": "Fréquence d'interrogation du modem. Minimum 10 s — le CPE actualise ses statistiques cellulaires en interne toutes les ~1-2 s ; interroger plus souvent ne fait que répéter les valeurs et alourdir la base de données."
+      }
+    }
   }
 }

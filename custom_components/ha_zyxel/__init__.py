@@ -12,8 +12,11 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from custom_components.ha_zyxel.const import (
     CONF_HOST,
     CONF_PASSWORD,
+    CONF_SCAN_INTERVAL,
     CONF_USERNAME,
     DEFAULT_SCAN_INTERVAL,
+    MAX_SCAN_INTERVAL,
+    MIN_SCAN_INTERVAL,
     DOMAIN,
 )
 
@@ -26,6 +29,26 @@ nr7101_logger.setLevel(logging.WARNING)
 from nr7101 import nr7101
 
 PLATFORMS = ["sensor", "button"]
+
+
+def _get_scan_interval(entry: ConfigEntry) -> int:
+    """Resolve the poll interval from options, clamped to the safe range."""
+    interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+    try:
+        interval = int(interval)
+    except (TypeError, ValueError):
+        interval = DEFAULT_SCAN_INTERVAL
+    return max(MIN_SCAN_INTERVAL, min(MAX_SCAN_INTERVAL, interval))
+
+
+async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Apply a changed scan interval without reinstalling (keeps one session)."""
+    data = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+    if not data:
+        return
+    coordinator = data["coordinator"]
+    coordinator.update_interval = timedelta(seconds=_get_scan_interval(entry))
+    await coordinator.async_request_refresh()
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -75,7 +98,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER,
         name=DOMAIN,
         update_method=async_update_data,
-        update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
+        update_interval=timedelta(seconds=_get_scan_interval(entry)),
     )
 
     await coordinator.async_config_entry_first_refresh()
@@ -85,6 +108,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "coordinator": coordinator,
         "router": router,
     }
+
+    # Re-apply the interval in place when options change (no new login).
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 

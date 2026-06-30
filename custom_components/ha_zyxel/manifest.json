@@ -4,11 +4,11 @@
   "codeowners": ["@zulufoxtrot", "@HennieLP", "@martijnmelchers", "@Igglybuff"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/zulufoxtrot/ha-zyxel",
+  "documentation": "https://github.com/s1mptom/ha-zyxel",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/zulufoxtrot/ha-zyxel/issues",
+  "issue_tracker": "https://github.com/s1mptom/ha-zyxel/issues",
   "requirements": [
     "nr7101@git+https://github.com/zulufoxtrot/nr7101.git@v2.0.2"
   ],
-  "version": "0.2.7"
+  "version": "0.3.0"
 }

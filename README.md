@@ -78,9 +78,33 @@ Note: the Mushroom card extension is required for the above code to work.
 
 ![](resources/import_demo.gif)
 
+## Configuring the poll interval
+
+After adding the device you can change how often it is polled:
+
+1. Go to **Settings > Devices & Services > Zyxel > Configure**.
+2. Set the **Polling interval** (seconds).
+
+Range: **10–300 s**, default **30 s**. The 10 s floor is deliberate — the CPE
+refreshes its cellular statistics internally only every ~1–2 s and caches them,
+so polling faster just repeats values, adds load and bloats the statistics
+database. Changes apply immediately, without reinstalling the integration and
+without re-logging into the modem (the single session is preserved).
+
 ## Available entities
 
-In theory, all items listed [here](https://github.com/pkorpine/nr7101?tab=readme-ov-file#example-output) should be available as entities. The entities are generated dynamically, meaning they can vary from one device to another. They depend on what the device lets us see.
+In theory, all scalar items listed [here](https://github.com/pkorpine/nr7101?tab=readme-ov-file#example-output) are available as entities. They are generated dynamically and depend on what the device exposes.
+
+In addition, this fork surfaces fields that the modem returns as nested objects/lists:
+
+- **Carrier aggregation (primary):** `CA Combination` plus downlink/uplink bandwidth.
+- **NSA (5G n78 anchor):** band, RFCN, physical cell ID, RSRP/RSRQ/SINR and downlink bandwidth.
+- **Secondary Component Carriers** as fixed slots **SCC1** and **SCC2** (band, RFCN, RSRP, RSRQ, SINR, downlink bandwidth, CA state). A slot that the modem isn't currently aggregating reports `unavailable` rather than disappearing, so dashboards stay stable.
+- **Neighbour Cells:** a single sensor whose state is the number of detected neighbours; per-cell details (type, mode, PCI, RFCN, RSRP, RSRQ, RSSI, SINR) are in its attributes.
+
+Signal-quality sensors (RSRP/RSRQ/SINR/RSSI/bandwidth) carry `state_class: measurement` with proper device classes and units, so Home Assistant keeps long-term statistics and charts them natively.
+
+> This integration is **read-only**: it polls cellular status and never triggers a band scan (`qscan`) or writes to the modem.
 
 ## Support
 
