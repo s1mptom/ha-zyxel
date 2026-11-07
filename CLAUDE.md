@@ -37,7 +37,11 @@ sensor.py  ── builds entities from the dict every refresh
 - `_flatten_dict()` — flattens nested dicts to dotted keys; **lists are skipped** (handled explicitly below).
 - `_coerce_number()` — casts numeric strings (e.g. bandwidth `"100"`) so `measurement` stats work.
 - `ConfiguredZyxelSensor` / `GenericZyxelSensor` — auto-generated from the flattened dict.
-- `ZyxelSCCSensor` — fixed **SCC1/SCC2** slots from `SCC_Info[i]`; `unavailable` when the slot is absent.
+- `ZyxelSCCSensor` — fixed **SCC1..SCC4** slots from `SCC_Info[i]`; `unavailable` when the slot is absent.
+- `_carriers()` — every carrier in use (anchor, LTE SCCs, NSA, NR SCCs) from ONE payload; twins keyed `n78_2`.
+- `ZyxelCarriersSensor` — state `B1+B3+B7+B32+n78`, carrier list + bandwidth totals in attributes (`carriers` unrecorded).
+- `ZyxelBandSensor` — per-band RSRP/RSRQ/SINR/Bandwidth; `PRESEED_BANDS` created up front, new bands added on first sight, restored from the entity registry.
+- `sms.py` / `services.py` — `ha_zyxel.send_sms` service.
 - `ZyxelNeighbourSensor` — one sensor; state = `len(NBR_Info)`, per-cell detail in attributes.
 - `SCC_FIELDS`, `NBR_ATTR_KEYS` — field configs for the two classes above.
 

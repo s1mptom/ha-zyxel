@@ -1,0 +1,50 @@
+send_sms:
+  name: Send SMS
+  description: >-
+    Send an SMS through the Zyxel 5G modem's cellular radio. Cyrillic, Latin and
+    emoji are supported (UCS2); long messages are split into up to 7 concatenated
+    parts automatically.
+  fields:
+    number:
+      name: Number
+      description: Destination phone number. Any format; non-digits are stripped.
+      required: true
+      example: "+447405294457"
+      selector:
+        text:
+    message:
+      name: Message
+      description: Message text (max 70 chars per part, up to 7 parts = 469 chars).
+      required: true
+      example: "Привет из умного дома!"
+      selector:
+        text:
+          multiline: true
+    keep_sent:
+      name: Keep sent copy
+      description: >-
+        Keep the sent message in the modem's SMS store. Off by default — sent
+        copies are dropped right after sending so the store never fills up.
+      required: false
+      default: false
+      selector:
+        boolean:
+
+delete_sms:
+  name: Delete SMS
+  description: Delete messages from the modem's SMS store.
+  fields:
+    scope:
+      name: Scope
+      description: Which messages to delete.
+      required: false
+      default: sent
+      selector:
+        select:
+          options:
+            - label: Sent (outbox)
+              value: sent
+            - label: Received (inbox)
+              value: received
+            - label: All
+              value: all

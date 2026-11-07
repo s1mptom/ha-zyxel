@@ -4,6 +4,7 @@ import logging
 from datetime import timedelta
 
 import async_timeout
+import requests
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
@@ -77,18 +78,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         try:
             async with async_timeout.timeout(15):
                 def get_all_data():
-                    data = router.get_status()
+                    # router.get_status() polls 8 separate endpoints
+                    # (cellwan_status, Traffic_Status, cardpage_status, lan,
+                    # lanhosts, wifi_easy_mesh, one_connect, status) even
+                    # though every sensor we expose only reads "cellular"
+                    # (cellwan_status). Fetch that one OID directly instead
+                    # to cut per-poll modem load 8x.
+                    #
+                    # get_json_object() has no session recovery of its own
+                    # (that retry-with-login lives inside get_status()'s
+                    # loop), so replicate it here: on a 401 (session expired
+                    # / not yet logged in) log in once and retry.
+                    try:
+                        cellular = router.get_json_object("cellwan_status")
+                    except requests.exceptions.HTTPError as ex:
+                        if ex.response is None or ex.response.status_code != 401:
+                            raise
+                        if not router.login():
+                            raise UpdateFailed("Router login failed") from ex
+                        cellular = router.get_json_object("cellwan_status")
 
-                    if not data:
+                    if not cellular:
                         raise UpdateFailed("No data received from router")
 
-                    # Get device info if not already in data
-                    if "device" not in data or not data["device"]:
-                        device_info = router.get_json_object("status")
-                        if device_info:
-                            data["device_info"] = device_info
-
-                    return data
+                    return {"cellular": cellular}
 
                 data = await hass.async_add_executor_job(get_all_data)
             # Success: make sure we're back on the normal (fast) cadence.
@@ -125,6 +138,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    # Register the SMS send service (idempotent).
+    from custom_components.ha_zyxel.services import async_register_services
+    await async_register_services(hass)
+
     return True
 
 
@@ -140,5 +157,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
+        from custom_components.ha_zyxel.services import async_unregister_services
+        async_unregister_services(hass)
 
     return unload_ok
